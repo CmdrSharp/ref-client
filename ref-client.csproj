@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net4.8</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Libs Include="libs\*.dll" Exclude="libs\System.*.dll" />
+
+    <Reference Include="@(Libs)">
+      <HintPath>%(Libs.FullPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Import Project="local.targets" Condition="Exists('local.targets')" />
+</Project>

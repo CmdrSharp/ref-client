@@ -1,0 +1,6 @@
+libs/*.dll
+bin/
+obj/
+
+# Local-only MSBuild overrides (copy local.targets.example to create yours)
+local.targets
