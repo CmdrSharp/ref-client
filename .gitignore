@@ -4,3 +4,6 @@ obj/
 
 # Local-only MSBuild overrides (copy local.targets.example to create yours)
 local.targets
+
+# Ignore the sln file
+ref-client.sln
