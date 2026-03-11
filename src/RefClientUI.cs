@@ -33,8 +33,9 @@ namespace RefClient
         return;
 
       bool shiftHeld = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
+      bool ctrlHeld = Keyboard.current.leftCtrlKey.isPressed || Keyboard.current.rightCtrlKey.isPressed;
 
-      if (shiftHeld && Keyboard.current[Key.H].wasPressedThisFrame)
+      if (ctrlHeld && shiftHeld && Keyboard.current[Key.H].wasPressedThisFrame)
       {
         _panelVisible = !_panelVisible;
 

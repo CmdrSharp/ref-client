@@ -1,7 +1,7 @@
 # Ref Client
 
 This client side mod renders a clickable UI for referees using the [Ruleset mod](https://github.com/oomtm450/Ruleset_PuckMod) by [oomtm450](https://github.com/oomtm450).  
-The UI is toggled with `Shift+H`. During this mode, you can right click to use the mouse cursor freely.
+The UI is toggled with `Ctrl+Shift+H`. During this mode, you can right click to use the mouse cursor freely.
 
 ![Screenshot](screenshot.jpg)
 
