@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,7 +9,7 @@ namespace RefClient
   public class RefClientUI : MonoBehaviour
   {
     private bool _panelVisible = false;
-    private bool _cursorUnlocked = false;
+    private MouseComponent _mouseComponent;
 
     private TeamPlayerWindow _redWindow;
     private TeamPlayerWindow _blueWindow;
@@ -25,67 +28,66 @@ namespace RefClient
       float infWidth = 700f;
       _infractionsWindow = new InfractionsWindow(98236,
         new Rect((Screen.width - infWidth) / 2f, Screen.height - 100, infWidth, 70));
+
+      _mouseComponent = new MouseComponent
+      {
+        VisibilityRequiresMouse = true
+      };
+
+      RegisterMouseComponent();
     }
 
     private void Update()
     {
-      if (Keyboard.current == null)
-        return;
-
-      bool shiftHeld = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
-      bool ctrlHeld = Keyboard.current.leftCtrlKey.isPressed || Keyboard.current.rightCtrlKey.isPressed;
-
-      if (ctrlHeld && shiftHeld && Keyboard.current[Key.H].wasPressedThisFrame)
+      if (Keyboard.current != null)
       {
-        _panelVisible = !_panelVisible;
+        bool shiftHeld = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
+        bool ctrlHeld = Keyboard.current.leftCtrlKey.isPressed || Keyboard.current.rightCtrlKey.isPressed;
 
-        if (!_panelVisible)
-          ReleaseCursor();
+        if (ctrlHeld && shiftHeld && Keyboard.current[Key.H].wasPressedThisFrame)
+          _panelVisible = !_panelVisible;
       }
 
-      if (!_panelVisible)
-        return;
+      bool shouldAcquire = _panelVisible
+        && Mouse.current != null
+        && Mouse.current.rightButton.isPressed;
 
-      if (Mouse.current == null)
-        return;
-
-      if (Mouse.current.rightButton.wasPressedThisFrame)
-        AcquireCursor();
-
-      if (Mouse.current.rightButton.wasReleasedThisFrame)
-        ReleaseCursor();
+      if (shouldAcquire)
+        _mouseComponent.Show();
+      else
+        _mouseComponent.Hide();
     }
 
-    private void AcquireCursor()
+    private void RegisterMouseComponent()
     {
-      if (_cursorUnlocked)
-        return;
-
-      _cursorUnlocked = true;
-      Cursor.lockState = CursorLockMode.None;
-      Cursor.visible = true;
-
       try
       {
-        NetworkBehaviourSingleton<UIManager>.Instance.isMouseActive = true;
+        var uiManager = NetworkBehaviourSingleton<UIManager>.Instance;
+
+        var componentsField = typeof(UIManager).GetField("components",
+          BindingFlags.NonPublic | BindingFlags.Instance);
+
+        var components = (List<UIComponent>)componentsField.GetValue(uiManager);
+        components.Add(_mouseComponent);
+
+        var onVisibility = typeof(UIManager).GetMethod("OnMouseRequiredComponentChangedVisibility",
+          BindingFlags.NonPublic | BindingFlags.Instance);
+  
+        var onFocus = typeof(UIManager).GetMethod("OnMouseRequiredComponentChangedFocus",
+          BindingFlags.NonPublic | BindingFlags.Instance);
+
+        _mouseComponent.OnVisibilityChanged += (EventHandler)Delegate.CreateDelegate(
+          typeof(EventHandler), uiManager, onVisibility);
+
+        _mouseComponent.OnFocusChanged += (EventHandler)Delegate.CreateDelegate(
+          typeof(EventHandler), uiManager, onFocus);
+
+        Debug.Log("[RefClient] Registered mouse component with UIManager.");
       }
-      catch { }
-    }
-
-    private void ReleaseCursor()
-    {
-      if (!_cursorUnlocked)
-        return;
-
-      _cursorUnlocked = false;
-      Cursor.lockState = CursorLockMode.Locked;
-      Cursor.visible = false;
-
-      try
+      catch (Exception ex)
       {
-        NetworkBehaviourSingleton<UIManager>.Instance.isMouseActive = false;
+        Debug.LogWarning($"[RefClient] Failed to register mouse component: {ex.Message}");
       }
-      catch { }
     }
 
     private void OnGUI()
